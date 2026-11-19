@@ -1,12 +1,16 @@
 # 💸 Expense Tracker
 
+[![CI](https://github.com/tonynunez678-arch/expense-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/tonynunez678-arch/expense-tracker/actions/workflows/ci.yml)
+
 A full-stack web app for tracking personal spending. Users create an account, log
 expenses by category, and see monthly totals, a category breakdown and a 6-month
 spending trend. Data can be imported from and exported to CSV.
 
 ![Dashboard screenshot](docs/dashboard.png)
 
-**Live demo:** _add your deployed link here_
+**Live demo:** https://expense-tracker-k8l0.onrender.com
+
+_Hosted on Render's free tier, so the first load after a period of inactivity can take up to a minute._
 
 ## Features
 
