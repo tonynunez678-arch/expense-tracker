@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Import{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>Import from CSV</h1>
+  <p>Upload a CSV file whose first row is exactly:</p>
+  <pre>{{ header }}
+2026-11-03,12.50,Food,Burrito
+2026-11-04,45.00,Groceries,Weekly groceries</pre>
+  <p class="muted">Dates are YYYY-MM-DD. Category must be one of: {{ categories | join(", ") }}.
+    Files from <strong>Export</strong> use this format, so you can round-trip your data.
+    If any row has a problem, nothing is imported and you'll see which lines to fix.</p>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="file" name="file" accept=".csv,text/csv" required>
+    <button type="submit" class="button">Import</button>
+  </form>
+</section>
+{% endblock %}

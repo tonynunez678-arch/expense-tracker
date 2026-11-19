@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}{{ month_label }}{% endblock %}
+{% block content %}
+<div class="month-nav">
+  <a href="{{ url_for('expenses.dashboard', month=prev_month) }}" aria-label="Previous month">←</a>
+  <h1>{{ month_label }}</h1>
+  <a href="{{ url_for('expenses.dashboard', month=next_month) }}" aria-label="Next month">→</a>
+</div>
+
+<section class="stats">
+  <div class="card stat">
+    <span class="muted">Total spent</span>
+    <strong>{{ month_total | money }}</strong>
+  </div>
+  <div class="card stat">
+    <span class="muted">Expenses</span>
+    <strong>{{ expenses | length }}</strong>
+  </div>
+  <div class="card stat">
+    <span class="muted">Top category</span>
+    <strong>{{ top_category or "—" }}</strong>
+  </div>
+</section>
+
+{% if expenses %}
+<section class="charts">
+  <div class="card">
+    <h2>By category</h2>
+    <canvas id="categoryChart" height="220"></canvas>
+    <ul class="breakdown">
+      {% for category, cents in by_category %}
+        <li><span>{{ category }}</span><span>{{ cents | money }}
+          <span class="muted">({{ (100 * cents / month_total) | round | int }}%)</span></span></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Last 6 months</h2>
+    <canvas id="trendChart" height="220"></canvas>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Expenses</h2>
+  <table>
+    <thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="num">Amount</th><th></th></tr></thead>
+    <tbody>
+      {% for e in expenses %}
+      <tr>
+        <td>{{ e.spent_on.strftime("%b %d") }}</td>
+        <td>{{ e.description or "—" }}</td>
+        <td><span class="tag">{{ e.category }}</span></td>
+        <td class="num">{{ e.amount_cents | money }}</td>
+        <td class="num"><a href="{{ url_for('expenses.edit_expense', expense_id=e.id) }}">Edit</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  const byCategory = {{ by_category | map("list") | list | tojson }};
+  const trend = {{ trend | tojson }};
+  const dollars = cents => "$" + (cents / 100).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  const palette = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444",
+                   "#8b5cf6", "#ec4899", "#14b8a6", "#84cc16", "#64748b"];
+
+  if (window.Chart) {
+    new Chart(document.getElementById("categoryChart"), {
+      type: "doughnut",
+      data: {
+        labels: byCategory.map(row => row[0]),
+        datasets: [{ data: byCategory.map(row => row[1]), backgroundColor: palette }],
+      },
+      options: { plugins: { tooltip: { callbacks: { label: ctx => `${ctx.label}: ${dollars(ctx.raw)}` } } } },
+    });
+    new Chart(document.getElementById("trendChart"), {
+      type: "bar",
+      data: {
+        labels: trend.map(m => m.label),
+        datasets: [{ label: "Spent", data: trend.map(m => m.cents), backgroundColor: "#4f46e5", borderRadius: 6 }],
+      },
+      options: {
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => dollars(ctx.raw) } } },
+        scales: { y: { ticks: { callback: value => dollars(value) } } },
+      },
+    });
+  }
+</script>
+{% else %}
+<section class="card empty">
+  <p>No expenses in {{ month_label }} yet.</p>
+  <a href="{{ url_for('expenses.add_expense') }}" class="button">Add an expense</a>
+  <a href="{{ url_for('expenses.import_csv') }}">or import a CSV</a>
+</section>
+{% endif %}
+{% endblock %}

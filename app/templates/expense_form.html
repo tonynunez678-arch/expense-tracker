@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<section class="card narrow">
+  <h1>{{ title }}</h1>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Amount ($)
+      <input name="amount" inputmode="decimal" required placeholder="12.50" value="{{ form.amount }}" autofocus>
+    </label>
+    <label>Category
+      <select name="category">
+        {% for c in categories %}
+          <option value="{{ c }}" {% if c == form.category %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Date
+      <input name="spent_on" type="date" required value="{{ form.spent_on }}">
+    </label>
+    <label>Description <span class="muted">(optional)</span>
+      <input name="description" maxlength="200" placeholder="Lunch at the dining hall" value="{{ form.description }}">
+    </label>
+    <div class="row">
+      <button type="submit" class="button">Save</button>
+      <a href="{{ url_for('expenses.dashboard') }}" class="muted">Cancel</a>
+    </div>
+  </form>
+
+  {% if expense %}
+  <form method="post" action="{{ url_for('expenses.delete_expense', expense_id=expense.id) }}"
+        onsubmit="return confirm('Delete this expense?');" class="danger-zone">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="button danger">Delete expense</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
