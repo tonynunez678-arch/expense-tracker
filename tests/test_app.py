@@ -42,8 +42,6 @@ def all_expenses(app):
         return db.session.scalars(select(Expense)).all()
 
 
-# ------------------------------------------------------------ unit tests ---
-
 @pytest.mark.parametrize("text, cents", [
     ("12.50", 1250), ("$1,234.56", 123456), ("0.01", 1), (" 7 ", 700), ("2.005", 201),
 ])
@@ -67,8 +65,6 @@ def test_shift_month_wraps_years():
     assert shift_month(2026, 1, -1) == (2025, 12)
     assert shift_month(2026, 3, -14) == (2025, 1)
 
-
-# ----------------------------------------------------------- auth tests ---
 
 def test_dashboard_requires_login(client):
     response = client.get("/")
@@ -104,13 +100,11 @@ def test_login_ignores_offsite_next(client):
     assert response.headers["Location"] == "/"
 
 
-# -------------------------------------------------------- expense tests ---
-
 def test_add_expense_and_monthly_total(client, app):
     register(client)
     add(client, amount="12.50", spent_on="2026-11-03")
     add(client, amount="$7.25", category="Transport", spent_on="2026-11-20")
-    add(client, amount="100", spent_on="2026-10-15")  # different month
+    add(client, amount="100", spent_on="2026-10-15")
 
     page = client.get("/?month=2026-11").data
     assert b"$19.75" in page
@@ -155,8 +149,6 @@ def test_users_cannot_touch_each_others_expenses(client, app):
     assert len(all_expenses(app)) == 1
 
 
-# ------------------------------------------------------------ CSV tests ---
-
 def upload(client, text):
     return client.post("/import", data={"file": (io.BytesIO(text.encode()), "data.csv")},
                        content_type="multipart/form-data", follow_redirects=True)
@@ -164,10 +156,10 @@ def upload(client, text):
 
 def test_csv_round_trip(client, app):
     register(client)
-    add(client, amount="12.50", description="=SUM(A1)")  # formula-looking text
+    add(client, amount="12.50", description="=SUM(A1)")
     exported = client.get("/export.csv").data.decode()
     assert exported.splitlines()[0] == "date,amount,category,description"
-    assert "'=SUM(A1)" in exported  # neutralized for spreadsheet apps
+    assert "'=SUM(A1)" in exported
 
     response = upload(client, exported)
     assert b"Imported 1 expenses" in response.data

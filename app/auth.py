@@ -1,5 +1,3 @@
-"""Register, log in and log out."""
-
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from sqlalchemy import select
@@ -11,7 +9,6 @@ bp = Blueprint("auth", __name__)
 
 
 def _is_safe_redirect(target):
-    """Only allow redirects to paths on this site (prevents open redirects)."""
     return bool(target) and target.startswith("/") and not target.startswith("//")
 
 
@@ -56,8 +53,6 @@ def login():
         password = request.form.get("password", "")
         user = db.session.scalar(select(User).filter_by(username=username))
 
-        # Same message whether the username or password is wrong, so attackers
-        # can't use the login form to discover which usernames exist.
         if user is None or not user.check_password(password):
             flash("Incorrect username or password.", "error")
         else:

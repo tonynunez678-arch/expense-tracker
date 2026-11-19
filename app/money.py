@@ -1,15 +1,9 @@
-"""Helpers for converting between user-typed amounts and integer cents."""
-
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 MAX_AMOUNT = Decimal("1000000")
 
 
 def parse_amount(text):
-    """Turn text like "$1,234.50" into integer cents (123450).
-
-    Raises ValueError with a user-friendly message if the input is invalid.
-    """
     cleaned = (text or "").strip().replace("$", "").replace(",", "")
     try:
         value = Decimal(cleaned)
@@ -25,5 +19,4 @@ def parse_amount(text):
 
 
 def format_cents(cents):
-    """Turn integer cents (123450) into display text ("$1,234.50")."""
     return f"${cents / 100:,.2f}"

@@ -1,5 +1,3 @@
-"""Application factory: creates and configures the Flask app."""
-
 import os
 
 from flask import Flask
@@ -22,8 +20,6 @@ def _database_url(app):
     url = os.environ.get("DATABASE_URL")
     if not url:
         return "sqlite:///" + os.path.join(app.instance_path, "expenses.db")
-    # Hosts like Render hand out "postgres://..." or "postgresql://..." URLs.
-    # Tell SQLAlchemy to use the psycopg (v3) driver for them.
     for prefix in ("postgres://", "postgresql://"):
         if url.startswith(prefix):
             return "postgresql+psycopg://" + url[len(prefix):]
@@ -37,7 +33,7 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", "dev-only-change-me"),
         SQLALCHEMY_DATABASE_URI=_database_url(app),
-        MAX_CONTENT_LENGTH=1 * 1024 * 1024,  # 1 MB upload limit for CSV import
+        MAX_CONTENT_LENGTH=1 * 1024 * 1024,
     )
     if test_config:
         app.config.update(test_config)
@@ -48,7 +44,7 @@ def create_app(test_config=None):
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "info"
 
-    from . import models  # noqa: F401  (registers the models with SQLAlchemy)
+    from . import models
     from .auth import bp as auth_bp
     from .expenses import bp as expenses_bp
     from .money import format_cents

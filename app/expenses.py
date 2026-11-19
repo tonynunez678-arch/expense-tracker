@@ -1,5 +1,3 @@
-"""Dashboard, add/edit/delete expenses, and CSV import/export."""
-
 import csv
 import io
 from collections import defaultdict
@@ -28,23 +26,17 @@ CSV_HEADER = ["date", "amount", "category", "description"]
 MAX_IMPORT_ROWS = 5000
 
 
-# ---------------------------------------------------------------- helpers ---
-
-
 def shift_month(year, month, delta):
-    """Move (year, month) forward or back by `delta` months."""
     index = year * 12 + (month - 1) + delta
     return index // 12, index % 12 + 1
 
 
 def month_bounds(year, month):
-    """Return (first day of month, first day of the next month)."""
     next_year, next_month = shift_month(year, month, 1)
     return date(year, month, 1), date(next_year, next_month, 1)
 
 
 def parse_month(text):
-    """Parse "2026-11" into (2026, 11); fall back to the current month."""
     try:
         parsed = datetime.strptime(text or "", "%Y-%m")
         return parsed.year, parsed.month
@@ -54,10 +46,6 @@ def parse_month(text):
 
 
 def get_own_expense(expense_id):
-    """Fetch an expense, returning 404 if it doesn't exist OR isn't yours.
-
-    Using 404 (not 403) avoids revealing that another user's expense exists.
-    """
     expense = db.session.get(Expense, expense_id)
     if expense is None or expense.user_id != current_user.id:
         abort(404)
@@ -65,7 +53,6 @@ def get_own_expense(expense_id):
 
 
 def validate_expense(date_text, amount_text, category, description):
-    """Validate raw form/CSV values. Returns (clean_values, error_message)."""
     try:
         spent_on = date.fromisoformat((date_text or "").strip())
     except ValueError:
@@ -88,9 +75,6 @@ def validate_expense(date_text, amount_text, category, description):
     }, None
 
 
-# ----------------------------------------------------------------- routes ---
-
-
 @bp.route("/")
 @login_required
 def dashboard():
@@ -108,7 +92,6 @@ def dashboard():
         .order_by(Expense.spent_on.desc(), Expense.id.desc())
     ).all()
 
-    # Let the database do the grouping and summing.
     by_category = db.session.execute(
         select(Expense.category, func.sum(Expense.amount_cents))
         .where(*in_month)
@@ -117,7 +100,6 @@ def dashboard():
     ).all()
     month_total = sum(total for _, total in by_category)
 
-    # Spending trend for the 6 months ending with the selected month.
     first_year, first_month = shift_month(year, month, -5)
     trend_start, _ = month_bounds(first_year, first_month)
     trend_rows = db.session.execute(
@@ -244,8 +226,6 @@ def export_csv():
     writer.writerow(CSV_HEADER)
     for e in expenses:
         description = e.description
-        # Prevent "CSV injection": spreadsheet apps run cells starting with
-        # these characters as formulas.
         if description[:1] in ("=", "+", "-", "@"):
             description = "'" + description
         writer.writerow([
@@ -271,7 +251,7 @@ def import_csv():
         return redirect(url_for("expenses.import_csv"))
 
     try:
-        text = upload.read().decode("utf-8-sig")  # utf-8-sig strips Excel's BOM
+        text = upload.read().decode("utf-8-sig")
     except UnicodeDecodeError:
         flash("That file isn't a UTF-8 text CSV.", "error")
         return redirect(url_for("expenses.import_csv"))
@@ -283,8 +263,6 @@ def import_csv():
         return redirect(url_for("expenses.import_csv"))
     reader.fieldnames = fields
 
-    # All-or-nothing: if any row is bad, import nothing, so the user can fix the
-    # file and re-upload without creating duplicates.
     new_expenses, errors = [], []
     for line_number, row in enumerate(reader, start=2):
         if len(new_expenses) + len(errors) >= MAX_IMPORT_ROWS:

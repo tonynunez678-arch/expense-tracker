@@ -1,5 +1,3 @@
-"""Database models."""
-
 from datetime import date
 
 from flask_login import UserMixin
@@ -42,8 +40,6 @@ class User(UserMixin, db.Model):
 class Expense(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), index=True)
-    # Money is stored as whole cents (an integer) to avoid floating-point
-    # rounding errors like 0.1 + 0.2 == 0.30000000000000004.
     amount_cents: Mapped[int]
     category: Mapped[str] = mapped_column(String(40))
     description: Mapped[str] = mapped_column(String(200), default="")
